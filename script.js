@@ -1352,9 +1352,12 @@ function _openFinder(opts={}) {
       return;
     }
     const ext = (node.ext||'').toLowerCase();
+    // Emit event so GameManager and other modules can intercept
+    Events.emit('fs:open', id, node);
     if (['txt','md','js','ts','py','css','json'].includes(ext)) AppManager.open('editor', { fileId:id, node });
     else if (['jpg','jpeg','png','gif','webp'].includes(ext))  AppManager.open('imageviewer', { fileId:id, node });
     else if (ext==='html') AppManager.open('browser', { url:node.content });
+    else if (ext==='game') AppManager.open('game', { node });  // handled by GameManager
     else Toast.show(`Dateityp ".${ext}" wird nicht unterstützt`, '⚠️');
   }
 
@@ -1664,6 +1667,7 @@ function _openTerminal(opts={}) {
         ['whoami',  'Benutzername'],
         ['open',    'Datei öffnen'],
         ['neofetch','Systeminfo'],
+        ['games',   'Spiele auflisten und starten'],
         ['exit',    'Terminal schließen'],
       ];
       cmds.forEach(([cmd, desc]) => println(`  ${cmd.padEnd(12)} ${desc}`, 't-out'));
@@ -1784,8 +1788,14 @@ function _openTerminal(opts={}) {
     output.appendChild(pLine);
 
     const [cmd, ...args] = trimmed.split(/\s+/);
-    if (COMMANDS[cmd]) COMMANDS[cmd](args);
-    else println(`Befehl nicht gefunden: ${cmd}  (tippe "help")`, 't-err');
+    if (COMMANDS[cmd]) {
+      COMMANDS[cmd](args);
+    } else if (window.__terminalPlugins && window.__terminalPlugins[cmd]) {
+      // Plugin command (e.g. from game-manager.js)
+      window.__terminalPlugins[cmd](args, println);
+    } else {
+      println(`Befehl nicht gefunden: ${cmd}  (tippe "help")`, 't-err');
+    }
     output.scrollTop = output.scrollHeight;
   }
 
@@ -2314,7 +2324,9 @@ function startOS() {
       duration: 4000,
       actions: [{ label:'Notizen öffnen', primary:true, cb:() => AppManager.open('editor',{fileId:'note1',node:FileSystem.getNode('note1')}) }]
     });
-  }, 600);
+    // Signal external modules (e.g. game-manager.js) that OS is fully ready
+    Events.emit('os:started');
+  }, 500);
 }
 
 function boot() {

@@ -1,0 +1,434 @@
+/* =====================================================
+   WebOS — game-styles.css
+   Game System Styles + UI Bug Fixes
+   ===================================================== */
+
+/* ═══════════════════════════════════════════════════
+   BUG FIX: White / light bar below dock
+   
+   Root causes:
+   1. body background bleeds through if not fully clipped
+   2. backdrop-filter on #dock-apps creates a compositing
+      layer that paints outside the rounded border  
+   3. #dock-desktop-dots adds unexpected height below apps
+   ═══════════════════════════════════════════════════ */
+
+/* 1. Hard-clip the entire viewport — no overflow anywhere */
+html {
+  height: 100%;
+  overflow: hidden;
+}
+body {
+  height: 100%;
+  overflow: hidden;
+  /* Give body a matching dark background so any accidental
+     bleed-through never shows white */
+  background: #0d0d1a;
+}
+
+/* 2. Shell must not paint outside viewport */
+#os-shell {
+  overflow: hidden !important;
+}
+
+/* 3. Dock: use isolation to contain the backdrop-filter layer.
+   Remove any bottom padding / gap that creates extra space. */
+#dock {
+  /* Re-declare position so nothing inherits a bad bottom */
+  position: fixed;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 500;
+  /* Contain the backdrop-filter stacking context */
+  isolation: isolate;
+  /* flex-direction: column adds height between dock-apps and dots;
+     keep gap small and explicitly sized */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  /* Prevent the element itself from being wider than viewport */
+  max-width: calc(100vw - 32px);
+}
+
+/* 4. dock-apps: clip the backdrop-filter within the pill shape */
+#dock-apps {
+  /* overflow:hidden clips the blurred bg to the border-radius */
+  overflow: hidden;
+  /* Re-state the border-radius explicitly so it's certain */
+  border-radius: 20px;
+  /* Will-change triggers GPU compositing and prevents bleed */
+  will-change: transform;
+}
+
+/* 5. Desktop dots: fixed small height, no accidental expansion */
+#dock-desktop-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0;
+  height: 10px;       /* explicit — prevents height expansion */
+  min-height: 10px;
+  overflow: hidden;
+}
+
+/* 6. Desktops container: go full-height to bottom of viewport
+   (dock floats above via position:fixed — no bottom gap needed) */
+#desktops-container {
+  position: fixed;
+  top: 28px;   /* menubar height */
+  left: 0;
+  right: 0;
+  bottom: 0;   /* extend to true bottom — dock is fixed, not in flow */
+  overflow: hidden;
+}
+
+/* 7. Desktop slides: fill their container fully */
+.desktop-slide {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  overflow: hidden;
+}
+
+/* 8. Desktop wallpaper: also fill fully */
+.desktop-wallpaper {
+  position: absolute;
+  inset: 0;
+}
+
+/* ═══════════════════════════════════════════════════
+   GAME WINDOW WRAP
+═══════════════════════════════════════════════════ */
+.game-window-wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #0a0a14;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Loading overlay */
+.game-load-overlay {
+  position: absolute;
+  inset: 0;
+  background: #0a0a14;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 10;
+  transition: opacity 0.35s ease;
+}
+.game-load-icon  { font-size: 56px; animation: game-pulse 1s ease infinite alternate; }
+.game-load-title { color: rgba(255,255,255,0.8); font-size: 16px; font-weight: 600; letter-spacing: 0.05em; }
+.game-load-spinner { position: relative; width: 32px; height: 32px; }
+.game-spinner-ring {
+  width: 32px; height: 32px;
+  border: 2.5px solid rgba(255,255,255,0.12);
+  border-top-color: var(--accent, #0a84ff);
+  border-radius: 50%;
+  animation: spin calc(0.7s * var(--anim-speed, 1)) linear infinite;
+}
+@keyframes game-pulse { from { transform: scale(1); } to { transform: scale(1.08); } }
+
+/* Game toolbar */
+.game-toolbar {
+  height: 36px;
+  flex-shrink: 0;
+  background: rgba(0,0,0,0.35);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  gap: 8px;
+}
+.game-tb-icon  { font-size: 16px; }
+.game-tb-title { color: rgba(255,255,255,0.9); font-size: 13px; font-weight: 600; }
+.game-tb-cat   { color: rgba(255,255,255,0.35); font-size: 11px; font-weight: 500; padding: 2px 7px; background: rgba(255,255,255,0.07); border-radius: 4px; }
+.game-tb-spacer { flex: 1; }
+.game-tb-btn {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.7);
+  font-size: 14px;
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.12s, color 0.12s, transform 0.1s;
+}
+.game-tb-btn:hover  { background: rgba(255,255,255,0.16); color: white; }
+.game-tb-btn:active { transform: scale(0.9); }
+
+/* Game iframe */
+.game-iframe-wrap {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  background: #000;
+}
+.game-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+/* Fullscreen */
+.game-iframe-wrap:fullscreen,
+.game-iframe-wrap:-webkit-full-screen {
+  background: #000;
+}
+.game-iframe-wrap:fullscreen .game-iframe,
+.game-iframe-wrap:-webkit-full-screen .game-iframe {
+  width: 100vw;
+  height: 100vh;
+}
+
+/* ═══════════════════════════════════════════════════
+   GAME CENTER APP
+═══════════════════════════════════════════════════ */
+.game-center-wrap {
+  display: flex;
+  height: 100%;
+  background: rgba(10,8,18,0.85);
+}
+
+.game-center-sidebar {
+  width: 195px;
+  flex-shrink: 0;
+  background: rgba(0,0,0,0.28);
+  border-right: 1px solid rgba(255,255,255,0.07);
+  padding: 0 0 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.gc-sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 16px 14px;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 8px;
+}
+.gc-sidebar-logo-icon { font-size: 22px; }
+
+.gc-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  color: rgba(255,255,255,0.72);
+  font-size: 13px;
+  cursor: default;
+  border-radius: 8px;
+  margin: 1px 6px;
+  transition: background 0.12s, color 0.12s;
+}
+.gc-sidebar-item:hover  { background: rgba(255,255,255,0.08); color: white; }
+.gc-sidebar-item.active { background: rgba(10,132,255,0.28); color: white; }
+.gc-sidebar-item-icon   { font-size: 16px; width: 20px; text-align: center; }
+
+.gc-drop-hint {
+  margin: auto 10px 0;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1.5px dashed rgba(255,255,255,0.14);
+  border-radius: 10px;
+  color: rgba(255,255,255,0.35);
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+  cursor: default;
+  transition: border-color 0.2s, background 0.2s;
+}
+.gc-drop-hint:hover {
+  border-color: rgba(10,132,255,0.4);
+  background: rgba(10,132,255,0.06);
+}
+
+/* Main content */
+.game-center-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.gc-search-row {
+  padding: 14px 16px 10px;
+  flex-shrink: 0;
+}
+.gc-search {
+  width: 100%;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 9px;
+  color: white;
+  font-size: 13px;
+  padding: 7px 12px;
+  outline: none;
+  transition: border-color 0.15s;
+  font-family: var(--font, sans-serif);
+}
+.gc-search:focus { border-color: var(--accent, #0a84ff); background: rgba(255,255,255,0.11); }
+.gc-search::placeholder { color: rgba(255,255,255,0.3); }
+
+/* Games grid */
+.gc-grid {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 14px 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+  align-content: start;
+}
+
+/* Game card */
+.gc-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.18s cubic-bezier(0.175,0.885,0.32,1.275),
+              border-color 0.15s,
+              box-shadow 0.18s;
+  display: flex;
+  flex-direction: column;
+}
+.gc-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  border-color: rgba(255,255,255,0.18);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.45);
+}
+.gc-card:active { transform: scale(0.97); }
+
+.gc-card-cover {
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+.gc-card-cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.4));
+}
+.gc-card-icon {
+  font-size: 52px;
+  line-height: 1;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+  z-index: 1;
+  transition: transform 0.2s ease;
+}
+.gc-card:hover .gc-card-icon { transform: scale(1.1); }
+.gc-card-cat {
+  position: absolute;
+  top: 8px; right: 8px;
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  background: rgba(0,0,0,0.5);
+  padding: 2px 7px;
+  border-radius: 4px;
+  z-index: 2;
+}
+
+.gc-card-info {
+  padding: 10px 12px 6px;
+  flex: 1;
+}
+.gc-card-title {
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.gc-card-desc {
+  color: rgba(255,255,255,0.45);
+  font-size: 11.5px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.gc-card-plays {
+  color: rgba(255,255,255,0.28);
+  font-size: 10.5px;
+  margin-top: 5px;
+}
+
+.gc-card-play {
+  width: calc(100% - 24px);
+  margin: 6px 12px 12px;
+  border: none;
+  color: white;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 7px;
+  border-radius: 8px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: filter 0.15s, transform 0.1s;
+  font-family: var(--font, sans-serif);
+}
+.gc-card-play:hover  { filter: brightness(1.18); }
+.gc-card-play:active { transform: scale(0.95); }
+
+/* Empty state */
+.gc-empty {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: rgba(255,255,255,0.25);
+  font-size: 14px;
+  text-align: center;
+  gap: 4px;
+}
+
+/* ═══════════════════════════════════════════════════
+   DOCK GAME ICON (injected by GameManager)
+═══════════════════════════════════════════════════ */
+.dock-item[data-app="games"] .dock-icon svg {
+  border-radius: 12px;
+}
+
+/* ═══════════════════════════════════════════════════
+   LIGHT MODE OVERRIDES
+═══════════════════════════════════════════════════ */
+.light-mode .game-center-wrap  { background: rgba(240,240,250,0.88); }
+.light-mode .game-center-sidebar { background: rgba(0,0,0,0.05); border-right-color: rgba(0,0,0,0.08); }
+.light-mode .gc-sidebar-logo   { color: #111; border-bottom-color: rgba(0,0,0,0.07); }
+.light-mode .gc-sidebar-item   { color: rgba(0,0,0,0.7); }
+.light-mode .gc-sidebar-item:hover  { background: rgba(0,0,0,0.06); color: #000; }
+.light-mode .gc-sidebar-item.active { background: rgba(10,132,255,0.18); }
+.light-mode .gc-card { background: rgba(255,255,255,0.7); border-color: rgba(0,0,0,0.1); }
+.light-mode .gc-card:hover { border-color: rgba(0,0,0,0.18); }
+.light-mode .gc-card-title { color: #111; }
+.light-mode .gc-card-desc  { color: rgba(0,0,0,0.5); }
+.light-mode .gc-search { background: rgba(0,0,0,0.07); border-color: rgba(0,0,0,0.12); color: #111; }
+.light-mode .gc-search::placeholder { color: rgba(0,0,0,0.3); }
+.light-mode .game-toolbar { background: rgba(255,255,255,0.6); border-bottom-color: rgba(0,0,0,0.08); }
+.light-mode .game-tb-title { color: #111; }
+.light-mode .game-tb-btn { background: rgba(0,0,0,0.07); border-color: rgba(0,0,0,0.1); color: #333; }
+.light-mode .game-tb-btn:hover { background: rgba(0,0,0,0.12); color: #000; }
+.light-mode .gc-drop-hint { color: rgba(0,0,0,0.35); border-color: rgba(0,0,0,0.14); }

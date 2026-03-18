@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Snake</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: #0d0d0d;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    height: 100vh; overflow: hidden;
+    font-family: 'Courier New', monospace;
+    color: #30d158;
+  }
+  #hud {
+    display: flex; gap: 40px; margin-bottom: 14px;
+    font-size: 13px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  #hud span { color: rgba(255,255,255,0.4); font-weight:400; }
+  canvas {
+    border: 1px solid rgba(48,209,88,0.25);
+    border-radius: 4px;
+    image-rendering: pixelated;
+  }
+  #overlay {
+    position: fixed; inset:0;
+    background: rgba(0,0,0,0.85);
+    display: flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    gap: 16px;
+  }
+  #overlay h1 { font-size: 32px; color: #30d158; letter-spacing: 0.1em; }
+  #overlay p  { color: rgba(255,255,255,0.5); font-size: 13px; }
+  #overlay .score-display { font-size: 18px; color: #ffd60a; }
+  button {
+    background: #30d158; color: #000;
+    border: none; padding: 10px 28px;
+    border-radius: 8px; font-size: 14px; font-weight: 700;
+    cursor: pointer; letter-spacing: 0.05em;
+    transition: filter 0.15s, transform 0.1s;
+  }
+  button:hover  { filter: brightness(1.2); }
+  button:active { transform: scale(0.95); }
+  #mobile-btns {
+    display: none; position: fixed; bottom: 20px;
+    grid-template-columns: repeat(3,50px); grid-template-rows: repeat(2,50px);
+    gap: 6px;
+  }
+  @media (pointer:coarse) { #mobile-btns { display: grid; } }
+  .mb { background: rgba(255,255,255,0.12); border:none; color:white;
+        font-size:20px; border-radius:10px; cursor:pointer; display:flex;
+        align-items:center; justify-content:center; }
+  .mb:active { background: rgba(255,255,255,0.25); }
+</style>
+</head>
+<body>
+<div id="hud">
+  <div>SCORE <span id="score">0</span></div>
+  <div>HIGH <span id="high">0</span></div>
+  <div>LEVEL <span id="level">1</span></div>
+</div>
+<canvas id="c"></canvas>
+
+<div id="overlay">
+  <h1>🐍 SNAKE</h1>
+  <p>Benutze Pfeiltasten oder WASD</p>
+  <div class="score-display" id="overlay-score" style="display:none"></div>
+  <button id="start-btn">SPIELEN</button>
+</div>
+
+<div id="mobile-btns">
+  <div></div>
+  <button class="mb" data-dir="up">↑</button>
+  <div></div>
+  <button class="mb" data-dir="left">←</button>
+  <button class="mb" data-dir="down">↓</button>
+  <button class="mb" data-dir="right">→</button>
+</div>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+
+const CELL  = 18;
+const COLS  = 25;
+const ROWS  = 20;
+canvas.width  = CELL * COLS;
+canvas.height = CELL * ROWS;
+
+let snake, dir, nextDir, food, score, level, highScore, running, loopId, speed;
+highScore = +localStorage.getItem('snake_high') || 0;
+document.getElementById('high').textContent = highScore;
+
+const DIR = { up:[0,-1], down:[0,1], left:[-1,0], right:[1,0] };
+const opposite = { up:'down', down:'up', left:'right', right:'left' };
+
+function init() {
+  snake   = [{x:12,y:10},{x:11,y:10},{x:10,y:10}];
+  dir     = 'right'; nextDir = 'right';
+  score   = 0; level = 1; speed = 150;
+  placeFood();
+  render();
+}
+
+function placeFood() {
+  const occupied = new Set(snake.map(s=>s.x+','+s.y));
+  do { food={x:Math.floor(Math.random()*COLS),y:Math.floor(Math.random()*ROWS)}; }
+  while (occupied.has(food.x+','+food.y));
+}
+
+function step() {
+  dir = nextDir;
+  const head = { x:snake[0].x+DIR[dir][0], y:snake[0].y+DIR[dir][1] };
+  // Wall wrap
+  head.x = (head.x+COLS)%COLS; head.y = (head.y+ROWS)%ROWS;
+  // Self collision
+  if (snake.some(s=>s.x===head.x&&s.y===head.y)) { gameOver(); return; }
+  snake.unshift(head);
+  if (head.x===food.x&&head.y===food.y) {
+    score++; level=Math.floor(score/5)+1; speed=Math.max(60,150-level*12);
+    document.getElementById('score').textContent=score;
+    document.getElementById('level').textContent=level;
+    if(score>highScore){highScore=score;localStorage.setItem('snake_high',highScore);document.getElementById('high').textContent=highScore;}
+    placeFood();
+    clearTimeout(loopId); loopId=setTimeout(loop,speed);
+  } else { snake.pop(); }
+  render();
+}
+
+function render() {
+  ctx.fillStyle='#0d0d0d'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  // Grid dots
+  ctx.fillStyle='rgba(255,255,255,0.04)';
+  for(let x=0;x<COLS;x++) for(let y=0;y<ROWS;y++) ctx.fillRect(x*CELL+8,y*CELL+8,2,2);
+  // Food
+  const fx=food.x*CELL, fy=food.y*CELL;
+  ctx.fillStyle='#ff453a'; ctx.beginPath();
+  ctx.roundRect(fx+2,fy+2,CELL-4,CELL-4,4); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,0.6)'; ctx.fillRect(fx+5,fy+4,4,3);
+  // Snake
+  snake.forEach((s,i)=>{
+    const t = i/snake.length;
+    ctx.fillStyle=`hsl(${135-t*20},${80-t*20}%,${45+t*15}%)`;
+    ctx.beginPath();
+    const r = i===0?5:3;
+    ctx.roundRect(s.x*CELL+1,s.y*CELL+1,CELL-2,CELL-2,r); ctx.fill();
+    if(i===0){
+      // Eyes
+      const [ex,ey]=dir==='up'?[3,3]:dir==='down'?[3,CELL-7]:dir==='left'?[3,5]:dir==='right'?[CELL-8,5]:[CELL-8,5];
+      ctx.fillStyle='white'; ctx.beginPath(); ctx.arc(s.x*CELL+ex+2,s.y*CELL+ey,2.5,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='white'; ctx.beginPath(); ctx.arc(s.x*CELL+ex+2,s.y*CELL+ey+5,2.5,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#0d0d0d'; ctx.beginPath(); ctx.arc(s.x*CELL+ex+2.5,s.y*CELL+ey,1.2,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#0d0d0d'; ctx.beginPath(); ctx.arc(s.x*CELL+ex+2.5,s.y*CELL+ey+5,1.2,0,Math.PI*2); ctx.fill();
+    }
+  });
+}
+
+function loop() { step(); if(running) loopId=setTimeout(loop,speed); }
+
+function start() {
+  init(); running=true;
+  document.getElementById('overlay').style.display='none';
+  loopId=setTimeout(loop,speed);
+}
+
+function gameOver() {
+  running=false; clearTimeout(loopId);
+  const ov=document.getElementById('overlay');
+  document.getElementById('overlay-score').style.display='block';
+  document.getElementById('overlay-score').textContent='PUNKTE: '+score;
+  document.getElementById('start-btn').textContent='NOCHMAL';
+  ov.style.display='flex';
+}
+
+document.getElementById('start-btn').addEventListener('click',start);
+
+document.addEventListener('keydown',e=>{
+  const map={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',w:'up',s:'down',a:'left',d:'right'};
+  const d=map[e.key];
+  if(d&&d!==opposite[dir]){nextDir=d;e.preventDefault();}
+});
+
+document.querySelectorAll('.mb').forEach(b=>{
+  b.addEventListener('click',()=>{const d=b.dataset.dir;if(d&&d!==opposite[dir])nextDir=d;});
+});
+
+// Handle resize
+function resize(){
+  const maxW=window.innerWidth-20, maxH=window.innerHeight-100;
+  const sc=Math.min(maxW/(CELL*COLS),maxH/(CELL*ROWS));
+  canvas.style.transform=`scale(${sc})`; canvas.style.transformOrigin='top center';
+}
+resize(); window.addEventListener('resize',resize);
+render();
+</script>
+</body>
+</html>
