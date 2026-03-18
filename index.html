@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebOS 2.0</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════
+       LOGIN SCREEN
+  ═══════════════════════════════════════ -->
+  <div id="login-screen">
+    <div class="login-bg-blur"></div>
+    <div class="login-card">
+      <div class="login-avatar">👤</div>
+      <div class="login-user">Benutzer</div>
+      <div class="login-input-wrap">
+        <input type="password" id="login-pw" class="login-pw" placeholder="Passwort eingeben…" autocomplete="off"/>
+        <button id="login-btn" class="login-btn">→</button>
+      </div>
+      <div class="login-hint">Passwort: <em>webos</em> &nbsp;|&nbsp; oder einfach Enter drücken</div>
+      <div id="login-error" class="login-error hidden">Falsches Passwort</div>
+    </div>
+    <div class="login-clock-wrap">
+      <div id="login-time" class="login-time">00:00</div>
+      <div id="login-date" class="login-date">Montag, 1. Januar</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       BOOT SCREEN
+  ═══════════════════════════════════════ -->
+  <div id="boot-screen">
+    <div class="boot-logo">
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+        <circle cx="32" cy="32" r="30" stroke="white" stroke-width="2" opacity="0.3"/>
+        <circle cx="32" cy="32" r="20" stroke="white" stroke-width="2" opacity="0.6"/>
+        <circle cx="32" cy="32" r="10" fill="white"/>
+      </svg>
+      <span>WebOS</span>
+    </div>
+    <div class="boot-spinner"><div class="spinner-ring"></div></div>
+    <div class="boot-version">Version 2.0</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       DESKTOP WRAPPER (holds all virtual desktops)
+  ═══════════════════════════════════════ -->
+  <div id="os-shell" class="hidden">
+
+    <!-- MENUBAR -->
+    <div id="menubar">
+      <div class="menubar-left">
+        <span class="menubar-logo">⬡</span>
+        <span class="menubar-item active-app-name" id="mb-app-name">Finder</span>
+        <span class="menubar-item" id="mb-file">Ablage</span>
+        <span class="menubar-item" id="mb-edit">Bearbeiten</span>
+        <span class="menubar-item" id="mb-view">Darstellung</span>
+        <span class="menubar-item" id="mb-window">Fenster</span>
+      </div>
+      <div class="menubar-right">
+        <span class="menubar-icon" id="mb-wifi" title="WLAN">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M1 9l2 2c5-5 13-5 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+        </span>
+        <span class="menubar-icon" id="mb-vol" title="Lautstärke">🔊</span>
+        <span class="menubar-battery">🔋 87%</span>
+        <span id="menubar-clock" class="menubar-clock">00:00</span>
+      </div>
+    </div>
+
+    <!-- VIRTUAL DESKTOPS STRIP -->
+    <div id="desktops-container">
+      <!-- Desktop slides injected by JS -->
+    </div>
+
+    <!-- DESKTOP SWITCHER OVERLAY -->
+    <div id="desktop-switcher" class="hidden">
+      <div id="switcher-previews"></div>
+      <div id="switcher-add" class="switcher-add-btn" title="Neuer Desktop">＋</div>
+    </div>
+
+    <!-- CONTEXT MENU -->
+    <div id="context-menu" class="hidden">
+      <ul id="context-menu-list"></ul>
+    </div>
+
+    <!-- SELECTION BOX -->
+    <div id="selection-box"></div>
+
+    <!-- PERMISSION DIALOG -->
+    <div id="permission-dialog" class="hidden">
+      <div class="perm-card">
+        <div class="perm-icon">🔒</div>
+        <div class="perm-title" id="perm-title">App möchte zugreifen</div>
+        <div class="perm-msg" id="perm-msg">Möchtest du dieser App Zugriff gewähren?</div>
+        <div class="perm-actions">
+          <button class="perm-btn deny"  id="perm-deny">Ablehnen</button>
+          <button class="perm-btn allow" id="perm-allow">Erlauben</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DOCK -->
+    <div id="dock">
+      <div id="dock-apps">
+        <div class="dock-item" data-app="finder"      title="Finder">
+          <div class="dock-icon"><svg viewBox="0 0 48 48" width="48" height="48"><rect width="48" height="48" rx="12" fill="#1c8fe3"/><rect x="9" y="12" width="30" height="6" rx="3" fill="white" opacity=".9"/><rect x="9" y="21" width="30" height="6" rx="3" fill="white" opacity=".7"/><rect x="9" y="30" width="20" height="6" rx="3" fill="white" opacity=".5"/></svg></div>
+          <span class="dock-label">Finder</span>
+        </div>
+        <div class="dock-item" data-app="editor"      title="Texteditor">
+          <div class="dock-icon"><svg viewBox="0 0 48 48" width="48" height="48"><rect width="48" height="48" rx="12" fill="#f0a500"/><rect x="12" y="12" width="24" height="4" rx="2" fill="white" opacity=".9"/><rect x="12" y="19" width="24" height="4" rx="2" fill="white" opacity=".7"/><rect x="12" y="26" width="16" height="4" rx="2" fill="white" opacity=".5"/><rect x="12" y="33" width="20" height="4" rx="2" fill="white" opacity=".4"/></svg></div>
+          <span class="dock-label">Notizen</span>
+        </div>
+        <div class="dock-item" data-app="browser"     title="Browser">
+          <div class="dock-icon"><svg viewBox="0 0 48 48" width="48" height="48"><rect width="48" height="48" rx="12" fill="#34a853"/><circle cx="24" cy="24" r="14" stroke="white" stroke-width="2.5" fill="none"/><line x1="24" y1="10" x2="24" y2="38" stroke="white" stroke-width="1.8"/><line x1="10" y1="24" x2="38" y2="24" stroke="white" stroke-width="1.8"/><ellipse cx="24" cy="24" rx="7" ry="14" stroke="white" stroke-width="1.8" fill="none"/></svg></div>
+          <span class="dock-label">Browser</span>
+        </div>
+        <div class="dock-item" data-app="imageviewer" title="Bilder">
+          <div class="dock-icon"><svg viewBox="0 0 48 48" width="48" height="48"><rect width="48" height="48" rx="12" fill="#e84393"/><rect x="8" y="12" width="32" height="24" rx="4" stroke="white" stroke-width="2.5" fill="none"/><circle cx="17" cy="20" r="4" fill="white" opacity=".8"/><path d="M8 31 l10-10 7 7 5-5 10 7" stroke="white" stroke-width="2.5" fill="none"/></svg></div>
+          <span class="dock-label">Bilder</span>
+        </div>
+        <div class="dock-item" data-app="terminal"    title="Terminal">
+          <div class="dock-icon"><svg viewBox="0 0 48 48" width="48" height="48"><rect width="48" height="48" rx="12" fill="#1c1c1e"/><rect x="7" y="10" width="34" height="28" rx="4" fill="#2a2a2e"/><text x="12" y="26" font-family="monospace" font-size="11" fill="#30d158">$ _</text><polyline points="11,18 17,24 11,30" stroke="#0a84ff" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg></div>
+          <span class="dock-label">Terminal</span>
+        </div>
+        <div class="dock-item" data-app="calculator"  title="Rechner">
+          <div class="dock-icon"><svg viewBox="0 0 48 48" width="48" height="48"><rect width="48" height="48" rx="12" fill="#636366"/><rect x="10" y="10" width="28" height="28" rx="4" fill="#48484a"/><rect x="13" y="13" width="22" height="8" rx="2" fill="#1c1c1e"/><rect x="13" y="24" width="6" height="5" rx="1.5" fill="white" opacity=".7"/><rect x="21" y="24" width="6" height="5" rx="1.5" fill="white" opacity=".7"/><rect x="29" y="24" width="6" height="5" rx="1.5" fill="#ff9f0a" opacity=".9"/><rect x="13" y="31" width="6" height="5" rx="1.5" fill="white" opacity=".7"/><rect x="21" y="31" width="6" height="5" rx="1.5" fill="white" opacity=".7"/><rect x="29" y="31" width="6" height="5" rx="1.5" fill="#ff9f0a" opacity=".9"/></svg></div>
+          <span class="dock-label">Rechner</span>
+        </div>
+        <div class="dock-item" data-app="musicplayer" title="Musik">
+          <div class="dock-icon"><svg viewBox="0 0 48 48" width="48" height="48"><rect width="48" height="48" rx="12" fill="#ff2d55"/><circle cx="24" cy="24" r="13" stroke="white" stroke-width="2.5" fill="none"/><circle cx="24" cy="24" r="4" fill="white"/><path d="M24 11 L28 20 L24 24" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div>
+          <span class="dock-label">Musik</span>
+        </div>
+        <div class="dock-separator"></div>
+        <div class="dock-item" data-app="settings" title="Einstellungen">
+          <div class="dock-icon"><svg viewBox="0 0 48 48" width="48" height="48"><rect width="48" height="48" rx="12" fill="#8e8e93"/><circle cx="24" cy="24" r="6" stroke="white" stroke-width="2.5" fill="none"/><path d="M24 9v5M24 34v5M9 24h5M34 24h5M13.4 13.4l3.5 3.5M31.1 31.1l3.5 3.5M13.4 34.6l3.5-3.5M31.1 16.9l3.5-3.5" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg></div>
+          <span class="dock-label">Einstellungen</span>
+        </div>
+        <div class="dock-separator"></div>
+        <div class="dock-item" data-app="trash" title="Papierkorb" id="dock-trash">
+          <div class="dock-icon">
+            <svg viewBox="0 0 48 48" width="48" height="48" id="trash-icon-svg"><rect width="48" height="48" rx="12" fill="#636366"/><rect x="14" y="17" width="20" height="22" rx="2.5" stroke="white" stroke-width="2" fill="none"/><line x1="9" y1="17" x2="39" y2="17" stroke="white" stroke-width="2.5" stroke-linecap="round"/><rect x="19" y="12" width="10" height="5" rx="1.5" stroke="white" stroke-width="1.8" fill="none"/><line x1="20" y1="22" x2="20" y2="33" stroke="white" stroke-width="1.8" stroke-linecap="round"/><line x1="24" y1="22" x2="24" y2="33" stroke="white" stroke-width="1.8" stroke-linecap="round"/><line x1="28" y1="22" x2="28" y2="33" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </div>
+          <span class="dock-label">Papierkorb</span>
+        </div>
+      </div>
+      <!-- Desktop switcher dots -->
+      <div id="dock-desktop-dots"></div>
+    </div>
+
+  </div><!-- end #os-shell -->
+
+  <div id="toast-container"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
